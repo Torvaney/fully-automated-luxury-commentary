@@ -1,4 +1,5 @@
 import functools
+import os
 import random
 import typing
 
@@ -23,10 +24,15 @@ def fetch_events(match_id: int, start: int, end: int) -> typing.List[Event]:
     ]
 
 
-def pick_commentary_clip(event: Event) -> pydub.AudioSegment:
+def load_clip(clip_id: int) -> pydub.AudioSegment:
+    path_to_clip = os.path.join(os.path.dirname(__file__), 'audio', 'chunks', f'chunk-{clip_id}.wav')
+    return pydub.AudioSegment.from_wav(path_to_clip)
+
+
+def pick_commentary_clip(event: Event) -> pydb.AudioSegment:
     audio_id = random.randint(1, 472)
     try:
-        return pydub.AudioSegment.from_wav(f'audio/chunks/chunk-{audio_id}.wav')
+        return pydub.AudioSegment.from_wav(load_clip(audio_id))
     except Exception:
         return pick_commentary_clip(event)
 
