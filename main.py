@@ -29,11 +29,11 @@ def load_clip(clip_id: int) -> pydub.AudioSegment:
     return pydub.AudioSegment.from_wav(path_to_clip)
 
 
-def pick_commentary_clip(event: Event) -> pydb.AudioSegment:
+def pick_commentary_clip(event: Event) -> pydub.AudioSegment:
     audio_id = random.randint(1, 472)
     try:
-        return pydub.AudioSegment.from_wav(load_clip(audio_id))
-    except Exception:
+        return load_clip(audio_id)
+    except Exception as e:
         return pick_commentary_clip(event)
 
 
