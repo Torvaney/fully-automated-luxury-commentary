@@ -1,4 +1,6 @@
 .vscode
+audio/chunks
+!audio/chunks/.gitkeep
 
 # Created by https://www.gitignore.io/api/python
 
