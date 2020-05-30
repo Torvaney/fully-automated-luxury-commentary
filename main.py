@@ -5,23 +5,27 @@ import typing
 
 import pydub
 import pydub.playback
+import statsbombapi
 import typer
 
 
-class Event(typing.NamedTuple):
-    end_time: float
+class EventClip(typing.NamedTuple):
+    event: statsbombapi.Event
+    audio: pydub.AudioSegment
 
 
-def fetch_events(match_id: int, start: int, end: int) -> typing.List[Event]:
-    return [
-        Event(0.5),
-        Event(1.5),
-        Event(2.5),
-        Event(4.5),
-        Event(5.8),
-        Event(10),
-        Event(12.5),
-    ]
+def start_time(event: statsbombapi.Event):
+    return event.minute*60 + event.second
+
+
+def end_time(event: statsbombapi.Event):
+    return start_time(event) + (event.duration or 0)
+
+
+def fetch_events(match_id: int, start: int, end: int) -> typing.List[statsbombapi.Event]:
+    api = statsbombapi.StatsbombPublic()
+    all_events = api.events(match_id=match_id)
+    return [e for e in all_events if (start <= start_time(e)) and (end_time(e) <= end)]
 
 
 def load_clip(clip_id: int) -> pydub.AudioSegment:
@@ -29,7 +33,7 @@ def load_clip(clip_id: int) -> pydub.AudioSegment:
     return pydub.AudioSegment.from_wav(path_to_clip)
 
 
-def pick_commentary_clip(event: Event) -> pydub.AudioSegment:
+def pick_commentary_clip(event: statsbombapi.Event) -> pydub.AudioSegment:
     audio_id = random.randint(1, 472)
     try:
         return load_clip(audio_id)
@@ -37,7 +41,7 @@ def pick_commentary_clip(event: Event) -> pydub.AudioSegment:
         return pick_commentary_clip(event)
 
 
-def join_commentary(x: typing.Tuple[Event, pydub.AudioSegment], y: typing.Tuple[Event, pydub.AudioSegment]) -> typing.Tuple[Event, pydub.AudioSegment]:
+def join_commentary(x: EventClip, y: EventClip) -> EventClip:
     # NOTE: It's a monad! Presumably we can simplify the code as a result?
     event1, audio1 = x
     event2, audio2 = y
@@ -71,19 +75,19 @@ def join_commentary(x: typing.Tuple[Event, pydub.AudioSegment], y: typing.Tuple[
     # (Of course, there is also the case where the audio clips are perfectly
     #  aligned to the microsecond. We treat this as an overlap.)
 
-    time_to_next_event = event2.end_time - (event1.end_time + audio1.duration_seconds)
+    time_to_next_event = end_time(event2) - (end_time(event1) + audio1.duration_seconds)
     if time_to_next_event > 0:
         # Underlap
-        return (event1, audio1 + pydub.AudioSegment.silent(duration=time_to_next_event*1000) + audio2)
+        return EventClip(event1, audio1 + pydub.AudioSegment.silent(duration=time_to_next_event*1000) + audio2)
 
-    # Else: Overlap
+    # Overlap
     # NOTE: We don't explicitly fill in the additional silence; this should get
     # filled in by further invocations of join_commentary, or by the final clipping
-    return (event1, audio1)
+    return EventClip(event1, audio1)
 
 
 
-def generate_commentary(events: typing.List[Event]) -> pydub.AudioSegment:
+def generate_commentary(events: typing.List[statsbombapi.Event]) -> pydub.AudioSegment:
     _, audio = functools.reduce(join_commentary, [(e, pick_commentary_clip(e)) for e in events])
     return audio
 
