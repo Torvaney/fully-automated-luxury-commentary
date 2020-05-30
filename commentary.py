@@ -88,7 +88,6 @@ CLIPS = (
     CommentaryClip(35, [event_type_is('Ball Receipt*'),
                         # TODO: check if under pressure
                         lambda x: x.position.name == 'Goalkeeper',
-                        lambda x: x.pass_.outcome is None,
                         ]),
 
 

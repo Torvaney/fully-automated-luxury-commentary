@@ -80,7 +80,6 @@ def join_commentary(x: EventCommentary, y: EventCommentary) -> EventCommentary:
 
     time_to_next_event = end_time(event2) - (end_time(event1) + audio1.duration_seconds)
     if time_to_next_event > 0:
-        print(x, y, time_to_next_event)
         # Underlap
         return EventCommentary(event1, audio1 + pydub.AudioSegment.silent(duration=time_to_next_event*1000) + audio2)
 
