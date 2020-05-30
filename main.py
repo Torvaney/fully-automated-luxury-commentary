@@ -8,8 +8,11 @@ import pydub.playback
 import statsbombapi
 import typer
 
+import commentary
 
-class EventClip(typing.NamedTuple):
+
+class EventCommentary(typing.NamedTuple):
+    """ A StatsBomb event paired with a commentary clip. """
     event: statsbombapi.Event
     audio: pydub.AudioSegment
 
@@ -33,15 +36,15 @@ def load_clip(clip_id: int) -> pydub.AudioSegment:
     return pydub.AudioSegment.from_wav(path_to_clip)
 
 
-def pick_commentary_clip(event: statsbombapi.Event) -> pydub.AudioSegment:
-    audio_id = random.randint(1, 472)
-    try:
-        return load_clip(audio_id)
-    except Exception as e:
-        return pick_commentary_clip(event)
+def pick_commentary_clip(event: statsbombapi.Event) -> typing.Optional[pydub.AudioSegment]:
+    matching_clips = [c for c in commentary.CLIPS if c.match(event)]
+    if len(matching_clips) == 0:
+        return None
+    selected_clip = random.choice(matching_clips)
+    return load_clip(selected_clip.clip_id)
 
 
-def join_commentary(x: EventClip, y: EventClip) -> EventClip:
+def join_commentary(x: EventCommentary, y: EventCommentary) -> EventCommentary:
     # NOTE: It's a monad! Presumably we can simplify the code as a result?
     event1, audio1 = x
     event2, audio2 = y
@@ -77,18 +80,19 @@ def join_commentary(x: EventClip, y: EventClip) -> EventClip:
 
     time_to_next_event = end_time(event2) - (end_time(event1) + audio1.duration_seconds)
     if time_to_next_event > 0:
+        print(x, y, time_to_next_event)
         # Underlap
-        return EventClip(event1, audio1 + pydub.AudioSegment.silent(duration=time_to_next_event*1000) + audio2)
+        return EventCommentary(event1, audio1 + pydub.AudioSegment.silent(duration=time_to_next_event*1000) + audio2)
 
     # Overlap
     # NOTE: We don't explicitly fill in the additional silence; this should get
     # filled in by further invocations of join_commentary, or by the final clipping
-    return EventClip(event1, audio1)
-
+    return EventCommentary(event1, audio1)
 
 
 def generate_commentary(events: typing.List[statsbombapi.Event]) -> pydub.AudioSegment:
-    _, audio = functools.reduce(join_commentary, [(e, pick_commentary_clip(e)) for e in events])
+    events_with_commentary = [EventCommentary(e, pick_commentary_clip(e)) for e in events]
+    _, audio = functools.reduce(join_commentary, [e for e in events_with_commentary if e.audio])
     return audio
 
 
