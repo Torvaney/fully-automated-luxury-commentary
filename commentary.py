@@ -69,8 +69,16 @@ in_offensive_third = in_range(x_min=80)
 
 
 ground_pass = Composable(lambda x: x.pass_.height.name == 'Ground Pass')
-successful_pass = Composable(lambda x: x.pass_.outcome is None)
 backwards_pass = Composable(lambda x: pass_end_location(x)[0] < location(x)[0])
+successful_pass = Composable(lambda x: x.pass_.outcome is None)
+
+
+def todo(x):
+    return lambda x: False
+
+
+def pass_outcome(name):
+    return Composable(lambda x: x.pass_.outcome.name == name if x.pass_.outcome else None)
 
 
 def with_weight(probability: float) -> Filter:
@@ -136,7 +144,7 @@ CLIPS = (
 
     CommentaryClip(64, [event_type_is('Pass'),
                         location > (isnt < in_offensive_third),
-                        lambda x: pass_end_location(x)[0] >= 90,
+                        lambda x: pass_end_location(x)[0] >= 100,
                         ground_pass,
                         successful_pass]),
 
@@ -197,7 +205,7 @@ CLIPS = (
     CommentaryClip(349, [event_type_is('Shot'),
                          lambda x: x.shot.outcome.name == 'Off T']),
     CommentaryClip(353, [event_type_is('Shot'),
-                         location > in_range(max_x=95),
+                         location > in_range(x_max=95),
                          lambda x: x.shot.outcome.name == 'Off T']),
     CommentaryClip(358, [event_type_is('Shot'),
                          lambda x: x.shot.outcome.name == 'Off T']),
@@ -211,30 +219,24 @@ CLIPS = (
 
 
     CommentaryClip(389, [event_type_is('Shot'),
-                         lambda x: x.shot.statsbomb_xg2 > 0.15,
-                         lambda x: x.shot.outcome.name == 'Saved']),
+                         lambda x: x.shot.outcome.name == 'Saved',
+                         lambda x: x.shot.statsbomb_xg2 > 0.15]),
 
 
     CommentaryClip(398, [event_type_is('Shot'),
-                         lambda x: x.shot.statsbomb_xg2 <= 0.15,
-                         lambda x: x.shot.outcome.name == 'Saved']),
+                         lambda x: x.shot.outcome.name == 'Saved',
+                         lambda x: x.shot.statsbomb_xg2 <= 0.15]),
 
 
     # Throw ins
-    CommentaryClip(402, [event_type_is('Pass'),
-                         lambda x: x.pass_.outcome.name == 'Out']),
-    CommentaryClip(403, [event_type_is('Pass'),
-                         lambda x: x.pass_.outcome.name == 'Out']),
-    CommentaryClip(404, [event_type_is('Pass'),
-                         lambda x: x.pass_.outcome.name == 'Out']),
-    CommentaryClip(407, [event_type_is('Pass'),
-                         lambda x: x.pass_.outcome.name == 'Out']),
-    CommentaryClip(408, [event_type_is('Pass'),
-                         lambda x: x.pass_.outcome.name == 'Out']),
-    CommentaryClip(411, [event_type_is('Pass'),
-                         lambda x: x.pass_.outcome.name == 'Out']),
-    CommentaryClip(414, [event_type_is('Pass'),
-                         lambda x: x.pass_.outcome.name == 'Out']),
+    # TODO: check that it goes out off the *side* of the pitch
+    CommentaryClip(402, [event_type_is('Pass'), pass_outcome('Out')]),
+    CommentaryClip(403, [event_type_is('Pass'), pass_outcome('Out')]),
+    CommentaryClip(404, [event_type_is('Pass'), pass_outcome('Out')]),
+    CommentaryClip(407, [event_type_is('Pass'), pass_outcome('Out')]),
+    CommentaryClip(408, [event_type_is('Pass'), pass_outcome('Out')]),
+    CommentaryClip(411, [event_type_is('Pass'), pass_outcome('Out')]),
+    CommentaryClip(414, [event_type_is('Pass'), pass_outcome('Out')]),
 
     # Fouls
     CommentaryClip(418, [event_type_is('Foul Committed')]),
@@ -246,6 +248,7 @@ CLIPS = (
 
 
     # Great expectancy!
-    CommentaryClip(434, [location > in_range(x_min=100, y_min=30, y_max=50)]),
+    CommentaryClip(434, [event_type_is('Ball Receipt*'),
+                         location > in_range(x_min=100, y_min=30, y_max=50)]),
 
 )
