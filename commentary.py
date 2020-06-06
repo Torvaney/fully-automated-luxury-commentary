@@ -20,7 +20,10 @@ class CommentaryClip(typing.NamedTuple):
     filters: typing.List[Filter]
 
     def match(self, event: statsbombapi.Event) -> bool:
-        return all(f(event) for f in self.filters)
+        try:
+            return all(f(event) for f in self.filters)
+        except Exception as err:
+            raise Exception(f'Threw error while matching clip {self.clip_id}') from err
 
 
 # Filters
@@ -71,6 +74,7 @@ in_offensive_third = in_range(x_min=80)
 ground_pass = Composable(lambda x: x.pass_.height.name == 'Ground Pass')
 backwards_pass = Composable(lambda x: pass_end_location(x)[0] < (location(x)[0] - 5))
 successful_pass = Composable(lambda x: x.pass_.outcome is None)
+through_ball = Composable(lambda x: x.pass_.technique and x.pass_.technique.name == 'Through Ball')
 
 
 def comment(x):
@@ -196,7 +200,7 @@ CLIPS = (
                         pass_end_location > in_offensive_third]),
     CommentaryClip(46, [event_type_is('Pass'),
                         comment('A defence-splitting ball!'),
-                        lambda x: x.pass_.technique.name == 'Through Ball']),
+                        through_ball]),
     CommentaryClip(48, [event_type_is('Pass'),
                         todo('That\'s not very long'),]),
 
@@ -269,9 +273,10 @@ CLIPS = (
                         comment('And off he goes!'),
                         lambda x: x.dribble.outcome.name == 'Complete',]),
 
-    CommentaryClip(77, [event_type_is('Ball Receipt*'),
+    CommentaryClip(77, [event_type_is('Carry'),
                         comment('Will he go all the way on his own?'),
-                        location > (isnt < in_defensive_third)]),
+                        location > (isnt < in_defensive_third),
+                        with_weight(0.5)]),
     CommentaryClip(78, [event_type_is('Dribble'),
                         comment('He looks unstoppable!'),
                         lambda x: x.dribble.outcome.name == 'Complete',]),
@@ -344,8 +349,7 @@ CLIPS = (
 
     CommentaryClip(104, [todo('And they are really putting the pressure on now')]),
     CommentaryClip(106, [todo('They are looking desperately for a way through')]),
-    CommentaryClip(108, [event_type_is('Pass'),
-                         lambda x: x.pass_.technique.name == 'Through Ball']),
+    CommentaryClip(108, [event_type_is('Pass'), through_ball]),
     CommentaryClip(109, [todo('They are certainly having to be patient!')]),
     CommentaryClip(110, [todo('Here\'s a chance to hit them on the break')]),
     CommentaryClip(111, [event_type_is('Dispossessed'),]),
@@ -359,11 +363,9 @@ CLIPS = (
     CommentaryClip(121, [todo('He will be looking to pinpoint someone in the box')]),
     CommentaryClip(122, [todo('Can he pierce the defence now!')]),
     CommentaryClip(123, [comment('Is there anyone on the end of it!'),
-                         event_type_is('Pass'),
-                         lambda x: x.pass_.technique.name == 'Through Ball']),
+                         event_type_is('Pass'), through_ball]),
     CommentaryClip(125, [comment('This looks dangerous'),
-                         event_type_is('Pass'),
-                         lambda x: x.pass_.technique.name == 'Through Ball',
+                         event_type_is('Pass'), through_ball,
                          successful_pass]),
     CommentaryClip(126, [todo('And he cuts inside...')]),
     CommentaryClip(127, [todo('Well they are all waiting for a possible pass')]),
@@ -375,8 +377,7 @@ CLIPS = (
                          lambda x: x.pass_.cross]),
     CommentaryClip(131, [comment('Past the defender, now...'),
                          event_type_is('Dribble'),
-                         location > in_offensive_third,
-                         successful_pass,]),
+                         location > in_offensive_third,]),
     CommentaryClip(132, [comment('Here comes the cross from the left'),
                          event_type_is('Pass'),
                          lambda x: x.pass_.cross,
@@ -393,8 +394,7 @@ CLIPS = (
                          successful_pass]),
     CommentaryClip(135, [comment('This could cause problems for the defence'),
                          event_type_is('Dribble'),
-                         location > in_offensive_third,
-                         successful_pass,]),
+                         location > in_offensive_third,]),
     CommentaryClip(136, [comment('He whips it in from the right'),
                          event_type_is('Pass'),
                          lambda x: x.pass_.cross,
@@ -450,7 +450,7 @@ CLIPS = (
     CommentaryClip(153, [event_type_is('Pass'),
                          comment('Is this the vital opening?'),
                          successful_pass,
-                         lambda x: x.pass_.technique.name == 'Through Ball']),
+                         through_ball]),
     CommentaryClip(154, [event_type_is('Dribble'),
                          comment('He has managed to avoid the tackle'),
                          lambda x: x.dribble.outcome.name == 'Complete']),
@@ -465,7 +465,7 @@ CLIPS = (
     CommentaryClip(160, [event_type_is('Pass'),
                          comment('Just the goalkeeper to beat, now'),
                          successful_pass,
-                         lambda x: x.pass_.technique.name == 'Through Ball']),
+                         through_ball]),
     CommentaryClip(161, [todo('One on one with the goalkeeper')]),
     CommentaryClip(162, [todo('He cannot miss from here')]),
     CommentaryClip(163, [todo('He just needs to steady himself')]),
