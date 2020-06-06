@@ -1,0 +1,3 @@
+pydub
+typer
+git+https://github.com/torvaney/statsbombapi.git
