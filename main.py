@@ -25,6 +25,12 @@ def end_time(event: statsbombapi.Event):
     return start_time(event) + (event.duration or 0)
 
 
+def pad_audio(audio: pydub.AudioSegment, seconds_padding: int) -> pydub.AudioSegment:
+    if seconds_padding > 0:
+        return audio + pydub.AudioSegment.silent(duration=seconds_padding*1000)
+    return audio
+
+
 def fetch_events(match_id: int, start: int, end: int) -> typing.List[statsbombapi.Event]:
     api = statsbombapi.StatsbombPublic()
     all_events = api.events(match_id=match_id)
@@ -45,9 +51,12 @@ def pick_commentary_clip(event: statsbombapi.Event) -> typing.Optional[pydub.Aud
 
 
 def join_commentary(x: EventCommentary, y: EventCommentary) -> EventCommentary:
-    # NOTE: It's a monad! Presumably we can simplify the code as a result?
+    # NOTE: It's a monad? Presumably we can simplify the code as a result?
     event1, audio1 = x
     event2, audio2 = y
+
+    audio1 = audio1 or pydub.AudioSegment.silent(duration=0)
+    audio2 = audio2 or pydub.AudioSegment.silent(duration=0)
 
     # We need to combine 2 audio clips while handling overlapping elegantly
     #
@@ -91,7 +100,7 @@ def join_commentary(x: EventCommentary, y: EventCommentary) -> EventCommentary:
 
 def generate_commentary(events: typing.List[statsbombapi.Event]) -> pydub.AudioSegment:
     events_with_commentary = [EventCommentary(e, pick_commentary_clip(e)) for e in events]
-    _, audio = functools.reduce(join_commentary, [e for e in events_with_commentary if e.audio])
+    _, audio = functools.reduce(join_commentary, [e for e in events_with_commentary])
     return audio
 
 
@@ -103,6 +112,10 @@ def main(match_id: int, start: int, end: int, audio_out: typing.Optional[str]=No
     # Map event->audio and concatenate together
     typer.echo(f'Generating commentary...')
     audio = generate_commentary(events)
+
+    # Fill any trailing time at the end with silence
+    time_remaining = (end-start) - audio.duration_seconds
+    audio = pad_audio(audio, time_remaining)
 
     default_audio_out = f'{match_id}-{start}-{end}.wav'
     typer.echo(f'Writing audio file to {audio_out or default_audio_out}...')
