@@ -77,6 +77,15 @@ successful_pass = Composable(lambda x: x.pass_.outcome is None)
 through_ball = Composable(lambda x: x.pass_.technique and x.pass_.technique.name == 'Through Ball')
 
 
+def xg2_at_least(value, default=True):
+    @Composable
+    def f(x):
+        if x.shot.statsbomb_xg2 and x.shot.statsbomb_xg2 >= value:
+            return True
+        return default
+    return f
+
+
 def comment(x):
     return lambda x: True
 
@@ -485,28 +494,28 @@ CLIPS = (
     CommentaryClip(199, [event_type_is('Shot'),
                          lambda x: x.shot.outcome.name == 'Goal',
                          lambda x: x.shot.statsbomb_xg <= 0.20,
-                         lambda x: x.shot.statsbomb_xg2 >= 0.60]),
+                         xg2_at_least(0.60)]),
     CommentaryClip(202, [event_type_is('Shot'),
                          lambda x: x.shot.outcome.name == 'Goal',
-                         lambda x: x.shot.statsbomb_xg2 >= 0.50]),
+                         xg2_at_least(0.50)]),
     CommentaryClip(203, [event_type_is('Shot'),
                          lambda x: x.shot.outcome.name == 'Goal',
-                         lambda x: x.shot.statsbomb_xg2 >= 0.50]),
+                         xg2_at_least(0.50)]),
     CommentaryClip(204, [event_type_is('Shot'),
                          lambda x: x.shot.outcome.name == 'Goal',
-                         lambda x: x.body_part.name == 'Head',
-                         lambda x: x.shot.statsbomb_xg2 >= 0.30]),
+                         lambda x: x.shot.body_part.name == 'Head',
+                         xg2_at_least(0.30)]),
     CommentaryClip(206, [event_type_is('Shot'),
                          lambda x: x.shot.outcome.name == 'Goal',
-                         lambda x: x.shot.statsbomb_xg2 >= 0.50]),
+                         xg2_at_least(0.50)]),
     CommentaryClip(207, [event_type_is('Shot'),
                          lambda x: x.shot.outcome.name == 'Goal',
-                         lambda x: x.body_part.name == 'Head',
-                         lambda x: x.shot.statsbomb_xg >= 0.10]),
+                         lambda x: x.shot.body_part.name == 'Head',
+                         xg2_at_least(0.10)]),
     CommentaryClip(209, [event_type_is('Shot'),
                          lambda x: x.shot.outcome.name == 'Goal',
-                         lambda x: x.body_part.name == 'Head',
-                         lambda x: x.shot.statsbomb_xg2 >= 0.30]),
+                         lambda x: x.shot.body_part.name == 'Head',
+                         xg2_at_least(0.30)]),
     CommentaryClip(213, [event_type_is('Shot'),
                          lambda x: x.shot.outcome.name == 'Goal',]),
 
@@ -544,7 +553,7 @@ CLIPS = (
     CommentaryClip(238, [event_type_is('Shot'),
                          comment('He left the goalkeeper with no chance'),
                          lambda x: x.shot.outcome.name == 'Goal',
-                         lambda x: x.shot.statsbomb_xg2 >= 0.30]),
+                         xg2_at_least(0.30)]),
     CommentaryClip(241, [event_type_is('Shot'),
                          lambda x: x.shot.outcome.name == 'Goal',
                          lambda x: x.shot.one_on_one]),
@@ -606,11 +615,11 @@ CLIPS = (
                          lambda x: x.shot.outcome.name == 'Saved']),
     CommentaryClip(389, [event_type_is('Shot'),
                          lambda x: x.shot.outcome.name == 'Saved',
-                         lambda x: x.shot.statsbomb_xg2 and x.shot.statsbomb_xg2 > 0.15]),
+                         xg2_at_least(0.15)]),
     CommentaryClip(391, [todo('Plucks it out of the air safely')]),
     CommentaryClip(398, [event_type_is('Shot'),
                          lambda x: x.shot.outcome.name == 'Saved',
-                         lambda x: x.shot.statsbomb_xg2 and x.shot.statsbomb_xg2 <= 0.15]),
+                         xg2_at_least(0.15)]),
 
 
     # Throw ins
