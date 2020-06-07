@@ -26,7 +26,7 @@ def end_time(event: statsbombapi.Event) -> int:
 
 
 def clip_time(event: statsbombapi.Event) -> int:
-    return end_time(event)
+    return start_time(event)
 
 
 def pad_audio(audio: pydub.AudioSegment, padding_before: int=0, padding_after: int=0) -> pydub.AudioSegment:
