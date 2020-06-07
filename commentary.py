@@ -81,7 +81,7 @@ through_ball = Composable(lambda x: x.pass_.technique and x.pass_.technique.name
 
 successful_dribble = Composable(lambda x: x.dribble.outcome.name == 'Complete')
 
-carry_end_location = Composable(lambda x: x.carry.location)
+carry_end_location = Composable(lambda x: x.carry.end_location)
 
 
 def xg2_at_least(value, default=True):
@@ -145,7 +145,9 @@ CLIPS = (
                         lambda x: x.pass_.length <= 20,
                         with_weight(0.2)]),
     CommentaryClip(12, [event_type_is('Pass'),
-                        comment('A lovely series of passes now'),
+                        comment('A lovely series of passes in defence'),
+                        location > in_defensive_third,
+                        pass_end_location > in_defensive_third,
                         successful_pass]),
     CommentaryClip(14, [event_type_is('Pass'),
                         location > in_defensive_half,
@@ -252,11 +254,14 @@ CLIPS = (
                         location > in_range(x_min=24)]),
 
     CommentaryClip(60, [comment('Now they\'re really pushing forward'),
+                        event_type_is('Carry'),
                         location > (isnt < in_offensive_third),
-                        pass_end_location > in_offensive_third,]),
+                        carry_end_location > in_offensive_third,]),
     CommentaryClip(61, [comment('And the midfielders really take control'),
+                        event_type_is('Pass'),
                         location > in_defensive_third,
-                        pass_end_location > (isnt < in_defensive_third)]),
+                        pass_end_location > (isnt < in_defensive_third),
+                        lambda x: 'Midfield' in x.position.name]),
     CommentaryClip(63, [comment('Now - what can they do from here?'),
                         event_type_is('Pass'),
                         location > (isnt < in_offensive_third),
@@ -399,18 +404,18 @@ CLIPS = (
                          pass_end_location > in_offensive_third]),
     CommentaryClip(110, [comment('Here\'s a chance to hit them on the break'),
                          event_type_is('Dribbled Past'),
-                         lambda x: x.dribbled_past.counterpress]),
+                         lambda x: x.dribbled_past and x.dribbled_past.counterpress]),
     CommentaryClip(111, [event_type_is('Dispossessed'),]),
     CommentaryClip(112, [comment('They could be punished on the counter attack'),
                          event_type_is('Dribbled Past'),
-                         lambda x: x.dribbled_past.counterpress]),
+                         lambda x: x.dribbled_past and x.dribbled_past.counterpress]),
     CommentaryClip(113, [event_type_is('Miscontrol')]),
     CommentaryClip(114, [comment('And the break is on'),
                          event_type_is('Dribbled Past'),
-                         lambda x: x.dribbled_past.counterpress]),
+                         lambda x: x.dribbled_past and x.dribbled_past.counterpress]),
     CommentaryClip(115, [comment('Here comes the counter thrust'),
                          event_type_is('Dribbled Past'),
-                         lambda x: x.dribbled_past.counterpress]),
+                         lambda x: x.dribbled_past and x.dribbled_past.counterpress]),
 
     CommentaryClip(117, [comment('And he\'s looking to hoist one in from there'),
                          event_type_is('Pass'),
@@ -546,7 +551,7 @@ CLIPS = (
                          lambda x: x.shot.one_on_one]),
     CommentaryClip(162, [comment('He cannot miss from here'),
                          event_type_is('Shot'),
-                         lambda x: x.statsbomb_xg >= 0.6]),
+                         lambda x: x.shot.statsbomb_xg >= 0.6]),
     CommentaryClip(163, [comment('He just needs to steady himself'),
                          event_type_is('Shot'),
                          lambda x: x.shot.one_on_one]),
@@ -706,14 +711,14 @@ CLIPS = (
 
 
     # Throw ins
-    CommentaryClip(401, [event_type_is('Pass'), pass_outcome('Out'), pass_end_location > in_range(x_min=1, 119)]),
-    CommentaryClip(402, [event_type_is('Pass'), pass_outcome('Out'), pass_end_location > in_range(x_min=1, 119)]),
-    CommentaryClip(403, [event_type_is('Pass'), pass_outcome('Out'), pass_end_location > in_range(x_min=1, 119)]),
-    CommentaryClip(404, [event_type_is('Pass'), pass_outcome('Out'), pass_end_location > in_range(x_min=1, 119)]),
-    CommentaryClip(407, [event_type_is('Pass'), pass_outcome('Out'), pass_end_location > in_range(x_min=1, 119)]),
-    CommentaryClip(408, [event_type_is('Pass'), pass_outcome('Out'), pass_end_location > in_range(x_min=1, 119)]),
-    CommentaryClip(411, [event_type_is('Pass'), pass_outcome('Out'), pass_end_location > in_range(x_min=1, 119)]),
-    CommentaryClip(414, [event_type_is('Pass'), pass_outcome('Out'), pass_end_location > in_range(x_min=1, 119)]),
+    CommentaryClip(401, [event_type_is('Pass'), pass_outcome('Out'), pass_end_location > in_range(x_min=1, x_max=119)]),
+    CommentaryClip(402, [event_type_is('Pass'), pass_outcome('Out'), pass_end_location > in_range(x_min=1, x_max=119)]),
+    CommentaryClip(403, [event_type_is('Pass'), pass_outcome('Out'), pass_end_location > in_range(x_min=1, x_max=119)]),
+    CommentaryClip(404, [event_type_is('Pass'), pass_outcome('Out'), pass_end_location > in_range(x_min=1, x_max=119)]),
+    CommentaryClip(407, [event_type_is('Pass'), pass_outcome('Out'), pass_end_location > in_range(x_min=1, x_max=119)]),
+    CommentaryClip(408, [event_type_is('Pass'), pass_outcome('Out'), pass_end_location > in_range(x_min=1, x_max=119)]),
+    CommentaryClip(411, [event_type_is('Pass'), pass_outcome('Out'), pass_end_location > in_range(x_min=1, x_max=119)]),
+    CommentaryClip(414, [event_type_is('Pass'), pass_outcome('Out'), pass_end_location > in_range(x_min=1, x_max=119)]),
 
     # Fouls
     CommentaryClip(418, [event_type_is('Foul Committed')]),
