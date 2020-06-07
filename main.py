@@ -17,18 +17,24 @@ class EventCommentary(typing.NamedTuple):
     audio: pydub.AudioSegment
 
 
-def start_time(event: statsbombapi.Event):
+def start_time(event: statsbombapi.Event) -> int:
     return event.minute*60 + event.second
 
 
-def end_time(event: statsbombapi.Event):
+def end_time(event: statsbombapi.Event) -> int:
     return start_time(event) + (event.duration or 0)
 
 
-def pad_audio(audio: pydub.AudioSegment, seconds_padding: int) -> pydub.AudioSegment:
-    if seconds_padding > 0:
-        return audio + pydub.AudioSegment.silent(duration=seconds_padding*1000)
-    return audio
+def clip_time(event: statsbombapi.Event) -> int:
+    return end_time(event)
+
+
+def pad_audio(audio: pydub.AudioSegment, padding_before: int=0, padding_after: int=0) -> pydub.AudioSegment:
+    return (
+        pydub.AudioSegment.silent(max(0, padding_before)) +
+        audio +
+        pydub.AudioSegment.silent(max(0, padding_after))
+    )
 
 
 def fetch_events(match_id: int, start: int, end: int) -> typing.List[statsbombapi.Event]:
@@ -87,7 +93,7 @@ def join_commentary(x: EventCommentary, y: EventCommentary) -> EventCommentary:
     # (Of course, there is also the case where the audio clips are perfectly
     #  aligned to the microsecond. We treat this as an overlap.)
 
-    time_to_next_event = end_time(event2) - (end_time(event1) + audio1.duration_seconds)
+    time_to_next_event = clip_time(event2) - (clip_time(event1) + audio1.duration_seconds)
     if time_to_next_event > 0:
         # Underlap
         return EventCommentary(event1, audio1 + pydub.AudioSegment.silent(duration=time_to_next_event*1000) + audio2)
@@ -113,9 +119,10 @@ def main(match_id: int, start: int, end: int, audio_out: typing.Optional[str]=No
     typer.echo(f'Generating commentary...')
     audio = generate_commentary(events)
 
-    # Fill any trailing time at the end with silence
+    # Fill any time at the start or end of the clip
+    time_to_start = clip_time(events[0]) - start
     time_remaining = (end-start) - audio.duration_seconds
-    audio = pad_audio(audio, time_remaining)
+    audio = pad_audio(audio, time_to_start, time_remaining)
 
     default_audio_out = f'{match_id}-{start}-{end}.wav'
     typer.echo(f'Writing audio file to {audio_out or default_audio_out}...')
