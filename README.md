@@ -1,4 +1,4 @@
-# AI McCoist
+# Fully Automated Luxury Commentary
 
 ## Setup
 
