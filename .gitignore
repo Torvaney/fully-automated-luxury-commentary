@@ -1,6 +1,6 @@
 .vscode
-audio/chunks
-!audio/chunks/.gitkeep
+audio
+!audio/.gitkeep
 
 .DS_Store
 

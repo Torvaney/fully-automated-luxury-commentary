@@ -44,7 +44,7 @@ def fetch_events(match_id: int, start: int, end: int) -> typing.List[statsbombap
 
 
 def load_clip(clip_id: int) -> pydub.AudioSegment:
-    path_to_clip = os.path.join(os.path.dirname(__file__), 'audio', 'chunks', f'chunk-{clip_id}.wav')
+    path_to_clip = os.path.join(os.path.dirname(__file__), 'audio', f'chunk-{clip_id}.wav')
     return pydub.AudioSegment.from_wav(path_to_clip)
 
 
