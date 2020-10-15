@@ -752,12 +752,15 @@ CLIPS = (
     CommentaryClip(450, [event_type_is('Offside')]),
     CommentaryClip(453, [comment('Yellow card'),
                          event_type_is('Foul Committed'),
+                         lambda x: x.foul_committed,
                          lambda x: x.foul_committed.card.name == 'Yellow Card']),
     CommentaryClip(455, [todo('Crazy challenge. Yellow card'),
                          event_type_is('Foul Committed'),
+                         lambda x: x.foul_committed,
                          lambda x: x.foul_committed.card.name == 'Yellow Card']),
     CommentaryClip(457, [todo('Referee issues a caution'),
                          event_type_is('Foul Committed'),
+                         lambda x: x.foul_committed,
                          lambda x: x.foul_committed.card.name == 'Yellow Card']),
 
     # I think from this point the clips aren't properly spliced
